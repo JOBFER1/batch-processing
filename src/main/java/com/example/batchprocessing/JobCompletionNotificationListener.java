@@ -23,10 +23,11 @@ public class JobCompletionNotificationListener implements JobExecutionListener {
 
 	@Override
 	public void afterJob(JobExecution jobExecution) {
+		
 		if(jobExecution.getStatus() == BatchStatus.COMPLETED) {
 			log.info("!!! JOB FINISHED! Time to verify the results");
-
-			jdbcTemplate.query("SELECT first_name, last_name FROM person",
+			
+			jdbcTemplate.query("SELECT firstName, lastName FROM person",
 				(rs, row) -> new Person(
 					rs.getString(1),
 					rs.getString(2))

@@ -16,20 +16,18 @@ import org.springframework.batch.item.file.builder.FlatFileItemReaderBuilder;
 import org.springframework.batch.item.file.mapping.BeanWrapperFieldSetMapper;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.PathResource;
 import org.springframework.transaction.PlatformTransactionManager;
 
 @Configuration
 public class BatchConfiguration {
 
-	// tag::readerwriterprocessor[]
 	@Bean
 	public FlatFileItemReader<Person> reader() {  //Entrada
 		
 		return new FlatFileItemReaderBuilder<Person>()
 			.name("personItemReader")
-			.resource(new ClassPathResource("sample-data.csv"))
+			.resource(new PathResource("src\\main\\resources\\sample-data.csv"))
 			.delimited()
 			.names(new String[]{"firstName", "lastName"})
 			.fieldSetMapper(new BeanWrapperFieldSetMapper<Person>() {{
@@ -45,18 +43,18 @@ public class BatchConfiguration {
 
 	@Bean
 	public JdbcBatchItemWriter<Person> writer(DataSource dataSource) { //Salida
+	
 		return new JdbcBatchItemWriterBuilder<Person>()
 			.itemSqlParameterSourceProvider(new BeanPropertyItemSqlParameterSourceProvider<>())
-			.sql("INSERT INTO people (first_name, last_name) VALUES (:firstName, :lastName)")
+			.sql("INSERT INTO person (firstName, lastName) VALUES (:firstName, :lastName)")
 			.dataSource(dataSource)
 			.build();
 	}
-	// end::readerwriterprocessor[]
 //-------------------------------------------------------------------------------------
-	// tag::jobstep[]
 	@Bean
 	public Job importUserJob(JobRepository jobRepository,
 			JobCompletionNotificationListener listener, Step step1) {
+		
 		return new JobBuilder("importUserJob", jobRepository)
 			.incrementer(new RunIdIncrementer())
 			.listener(listener)
@@ -68,6 +66,7 @@ public class BatchConfiguration {
 	@Bean
 	public Step step1(JobRepository jobRepository,
 			PlatformTransactionManager transactionManager, JdbcBatchItemWriter<Person> writer) {
+		
 		return new StepBuilder("step1", jobRepository)
 			.<Person, Person> chunk(10, transactionManager)
 			.reader(reader())
@@ -75,5 +74,4 @@ public class BatchConfiguration {
 			.writer(writer)
 			.build();
 	}
-	// end::jobstep[]
 }
